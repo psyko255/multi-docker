@@ -3,17 +3,20 @@ services:
   - docker
 
 before_install:
+  # Only build client here as a dev container because we only have test for the client right now
   - docker build -t edpsyk/react-test -f ./client/Dockerfile.dev ./client
 
 script:
+  # Run cient tests.  All scripts in this sectin must ass for after_success to run
   - docker run -e CI=true edpsyk/react-test npm test
 
 after_success:
+  # Build production versions of all containers
   - docker build -t edpsyk/multi-client ./client
   - docker build -t edpsyk/multi-nginx ./nginx
   - docker build -t edpsyk/multi-server ./server
   - docker build -t edpsyk/multi-worker ./worker
-
+  # Login to docker hub and push new containers
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
   - docker push edpsyk/multi-client
   - docker push edpsyk/multi-nginx
